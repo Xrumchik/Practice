@@ -1,1 +1,91 @@
+#define dirR 4
+#define speedr 5
+#define dirL 7
+#define speedl 6
 
+
+void setup() {
+  // put your setup code here, to run once:
+  for (int i=4;i<8;i++) pinMode(i,OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+
+}
+
+void move_(int left,int right){
+  digitalWrite(dirL,left<0);
+  digitalWrite(dirR,right<0);
+
+  left=map(constrain(abs(left),0,100),0,100,0,255);
+  right=map(constrain(abs(right),0,100),0,100,0,255);
+
+  analogWrite(speedl,left);
+  analogWrite(speedr,right);
+}
+
+
+void stop_(){
+  long long t=millis();
+  while (millis()-t<100){
+    move_(-100,-100);
+    delay(10);
+    move_(100,100);
+    delay(10);
+  }
+  move_(0,0);
+}
+
+
+void line(int s,int k){
+  int er=(analogRead(A0)-analogRead(A1))*k/100;
+  
+  analogWrite(speedl,s-er);
+  analogWrite(speedr,s+er);
+}
+
+void left(){
+  while (analogRead(A0)<500 or not(analogRead(A1)>500 and analogRead(A0)>500)){
+    move_(20,50);
+  }
+  while (analogRead(A0)>500){
+    move_(0,30);
+  }
+  stop_();
+}
+
+void right(){
+  while (analogRead(A0)<500 or not(analogRead(A1)>500 and analogRead(A1)>500)){
+    move_(50,20);
+  }
+  while (analogRead(A1)>500){
+    move_(30,0);
+  }
+  stop_();
+}
+
+void l_180(){
+  move_(-25,25);
+  delay(300);
+  while (analogRead(A0)>500){
+    move_(-25,25);
+  }
+  stop_();
+}
+
+void ncrossroad(int x){
+  int c=0;
+  while (c!=x){
+    while (not(analogRead(A0)<500 and analogRead(A1)<500)){
+      line(50,40);
+    }
+    c++;
+    if (c!=x){
+      while (analogRead(A0)<500 and analogRead(A1)<500){
+        move_(30,30);
+      }
+    }
+  }
+  stop_();
+}
