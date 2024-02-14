@@ -1,0 +1,241 @@
+#include <Servo.h>
+#define PIN_TRIG 12
+#define PIN_ECHO 11
+#define dirL 7
+#define speedl 6
+#define dirR 4
+#define speedr 5
+#define dw(x,y) digitalWrite(x,y)
+#define aw(x,y) analogWrite(x,y)
+#define ar(x) analogRead(x)
+
+Servo zah;
+long duration, cm;  
+
+unsigned long ggg=0;
+float mo=0.95; //коэффициент для уравнения моторов
+float erold=0,ero=0,eroo=0;
+
+void setup() {
+  pinMode(PIN_TRIG, OUTPUT);
+  pinMode(PIN_ECHO, INPUT);
+  zah.attach(13);
+  for(int i=4;i<8;i++) pinMode(i,OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  reg();
+  move_(0,0);
+  delay(100000000000000);
+}
+
+
+
+int hc(){
+  digitalWrite(PIN_TRIG, LOW);
+    delayMicroseconds(5);
+    digitalWrite(PIN_TRIG, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(PIN_TRIG, LOW);
+    duration = pulseIn(PIN_ECHO, HIGH);
+    cm = (duration / 2) / 29.1;
+    return cm;
+}
+
+
+
+void move_(int left,int right){
+  dw(dirL,left<0);
+  dw(dirR,right<0);
+
+  left=map(constrain(abs(left),0,100),0,100,0,255);
+  right=map(constrain(abs(right),0,100),0,100,0,255);
+
+  aw(speedl,left);
+  aw(speedr,right);
+}
+
+
+void bline(int s,int p,int d){
+  digitalWrite(dirL,1);
+  digitalWrite(dirR,1);
+  int er=(ar(A0)-ar(A1))*p/100;
+  int ed=((ar(A0)-ar(A1))-erold)*d;
+  er=er+ed;
+  aw(speedl,map(constrain(s-er,0,100),0,100,0,255));
+  aw(speedr,map(constrain((s+er)*mo,0,100),0,100,0,255));
+  erold=(ar(A0)-ar(A1));
+}
+
+void line(int s,int p,int d){
+  int er=(ar(A0)-ar(A1))*p/100;
+  int ed=((ar(A0)-ar(A1))-erold)*d;
+  er=er+ed;
+  aw(speedl,map(constrain(s-er,0,100),0,100,0,255));
+  aw(speedr,map(constrain((s+er)*mo,0,100),0,100,0,255));
+  erold=(ar(A0)-ar(A1));
+}
+
+void backcrossroad(){
+  while (not(ar(A1)>300 and ar(A0)>300)){
+    bline(80,-17,-5);
+  }
+  move_(0,0);
+}
+
+void ncrossroad(int x){
+  int c=0;
+  while (c!=x){
+    while (not(ar(A0)>300 and ar(A1)>300)){
+      line(80,17,5);
+    }
+    c++;
+    if (c!=x){
+      while (ar(A0)>300 and ar(A1)>300){
+        move_(80,80);
+      }
+    }
+  }
+  move_(0,0);
+}
+
+
+float dist_l(){
+  int c=0;
+  for(int i=0;i<10;i++){
+    float volts=ar(A3)*5.0/1024;
+    int dist=32*pow(volts,-1.1);
+    c+=dist;
+    delay(1);
+  }
+  return c/10;
+}
+
+void l_180(){
+  while (not(ar(A1)<300 and ar(A0)<300)){
+    move_(-80,80);
+  }
+  while (ar(A0)<300){
+    move_(-80,80);
+  }
+  move_(0,0);
+}
+
+void stop_(){
+  for(int i=0;i<10;i++){
+    move_(-100,-100);
+    delay(10);
+    move_(100,100);
+    delay(10);
+  }
+  move_(0,0);
+}
+
+void left(){
+  while (not(ar(A1)<300 and ar(A0)<300)){
+    move_(50,100);
+  }
+  while (ar(A1)<300){
+    move_(-80,80);
+  }
+  move_(0,0);
+}
+
+
+void right(){
+  while (not(ar(A1)<300 and ar(A0)<300)){
+    move_(100,50);
+  }
+  while (ar(A0)<300){
+    move_(80,-80);
+  }
+  move_(0,0);
+   
+}
+
+void check(){
+  int a[11] = {0,0,0,0,0,0,0,0,0,0,0};
+  int i=-1;
+  int g=10;
+  while (i<g){
+    line(80,17,5);
+     if (ar(A5)>300){
+      a[i]+=1;
+      dw(8,HIGH);
+      while (ar(A3)>300){
+        line(80,17,5);
+      }
+      
+     }
+     dw(8,LOW);
+     
+     if (ar(A0)>300 and ar(A1)>300){
+      i+=1;
+      if (i!=g){
+        while (ar(A0)>300 and ar(A1)>300){
+          move_(80,80);  
+          
+        }
+        
+      
+      }
+      move_(0,0);
+
+  }
+  }
+
+  stop_();
+}
+
+void reg(){
+  zah.write(150); 
+  move_(0,0);
+  int a[11] = {0,0,0,0};
+  int i=-1;
+  int g=1;
+  while (i<g){
+    line(80,17,5);
+     if (ar(A5)>300){
+      a[i]+=1;
+      dw(8,HIGH);
+      while (ar(A3)>300){
+        line(80,17,5);
+      }
+      
+     }
+     dw(8,LOW);
+     
+     if (ar(A0)>300 and ar(A1)>300){
+      i+=1;
+      if (i!=g){
+        while (ar(A0)>300 and ar(A1)>300){
+          move_(80,80);  
+          
+        }
+        
+      
+      }
+      move_(0,0);
+  }
+  }
+  i+=1;
+  ggg=millis();
+  while (millis()-ggg<1500){
+    line(80,17,5);
+    if (ar(A5)>300){
+      a[i]+=1;
+      dw(8,HIGH);
+      while (ar(A3)>300){
+        line(80,17,5);
+      }
+      dw(8,LOW);
+      break;
+      
+     }
+     
+  }
+  backcrossroad();
+  l_180();
+  ncrossroad(3);
+}
