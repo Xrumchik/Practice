@@ -101,17 +101,6 @@ void ncrossroad(int x){
 }
 
 
-float dist_l(){
-  int c=0;
-  for(int i=0;i<10;i++){
-    float volts=ar(A3)*5.0/1024;
-    int dist=32*pow(volts,-1.1);
-    c+=dist;
-    delay(1);
-  }
-  return c/10;
-}
-
 void l_180(){
   while (not(ar(A1)<300 and ar(A0)<300)){
     move_(-80,80);
